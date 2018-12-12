@@ -1,0 +1,105 @@
+#!/usr/bin/env sh
+checkDocker() {
+    docker ps > /dev/null
+    if [ $? -ne 0 ]; then
+      echo "[-] Cannot find/run Docker"
+      exit
+    fi
+}
+
+checkImages() {
+    docker image ls | grep -qE "jeffjerseycow/llvm\s+8.0"
+    if [ $? -ne 0 ]; then
+        echo "[*] Downloading 'llvm:8.0' image"
+        docker pull jeffjerseycow/llvm:8.0
+    fi
+    docker image ls | grep -qE "jeffjerseycow/debug\s+v0.0.1"
+    if [ $? -ne 0 ]; then
+        echo "[*] Downloading 'debug:v0.0.1' image"
+        docker pull jeffjerseycow/debug:v0.0.1
+    fi
+    docker image ls | grep -qE "jeffjerseycow/libfuzzer\s+v0.0.2"
+    if [ $? -ne 0 ]; then
+        echo "[*] Downloading 'libfuzzer:v0.0.2' image"
+        docker pull jeffjerseycow/libfuzzer:v0.0.2
+    fi
+}
+
+# check arguments
+usage() {
+    echo "[*] Selection an option build/fuzz"
+    exit
+}
+
+if [ -z $1 ]; then
+    usage
+    exit
+fi
+
+# configuration
+checkDocker
+checkImages
+
+# get corpus/artifacts
+while getopts "h?a:c:" opt; do
+  case "$opt" in
+	h|\?)
+	  usage
+	  exit
+	  ;;
+	a)
+	  ARTIFACTS=$OPTARG
+	  ;;
+  c)
+    CORPUS=$OPTARG
+    ;;
+  esac
+done
+
+shift $((OPTIND-1))
+
+# get mode
+if [ $# -eq 2 ]; then
+  MODE=`echo $@ | cut -d " " -f 1`
+  DIRECTORY=`echo $@ | cut -d " " -f 2`
+else
+  echo "[-] Too many arguments '$@'"
+fi
+
+# check directory
+if [ ! -d $DIRECTORY ]; then
+  echo "[-] Directory doesn't exist '$DIRECTORY'"
+  exit
+fi
+
+DIRECTORY="-v $DIRECTORY:/in"
+
+# debug
+if [ $MODE = "debug" ]; then
+  echo "[*] Debugging"
+  docker run --rm -ti --privileged $DIRECTORY jeffjerseycow/debug:v0.0.1
+  exit
+
+# fuzz
+elif [ $MODE = "fuzz" ]; then
+  echo "[*] Fuzzing"
+
+  # set corpus
+  if [ ! -z $CORPUS ]; then
+    CORPUS="-v $CORPUS:/corpus"
+  else
+    echo "[-] Not using corpus directory"
+  fi
+
+  # set artifacts
+  if [ ! -z $ARTIFACTS ]; then
+    ARTIFACTS="-v $ARTIFACTS:/artifacts"
+  else
+    echo "[-] Not using corpus directory"
+  fi
+
+  docker run --rm -ti $DIRECTORY $CORPUS $ARTIFACTS jeffjerseycow/libfuzzer:v0.0.2
+  exit
+else
+  echo "[-] Unknown mode '$MODE'"
+fi
