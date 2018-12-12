@@ -48,10 +48,10 @@ while getopts "h?a:c:" opt; do
 	  exit
 	  ;;
 	a)
-	  ARTIFACTS=$OPTARG
+	  ARTIFACTS=`realpath $OPTARG`
 	  ;;
   c)
-    CORPUS=$OPTARG
+    CORPUS=`realpath $OPTARG`
     ;;
   esac
 done
@@ -62,6 +62,7 @@ shift $((OPTIND-1))
 if [ $# -eq 2 ]; then
   MODE=`echo $@ | cut -d " " -f 1`
   DIRECTORY=`echo $@ | cut -d " " -f 2`
+  DIRECTORY=`realpath $DIRECTORY`
 else
   echo "[-] Too many arguments '$@'"
 fi
