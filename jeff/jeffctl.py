@@ -16,6 +16,7 @@ OUTPUT = ['fuzz.me']
 def addSubparsers(subparsers):
     debugParser = subparsers.add_parser('debug')
     debugParser.add_argument('directory', type=str, help='directory location to debug')
+    debugParser.add_argument('--no-asan', action='store_true', help='disable address sanitizer')
 
     fuzzParser = subparsers.add_parser('libfuzzer')
     fuzzParser.add_argument('directory', type=str, help='directory location to fuzz')
