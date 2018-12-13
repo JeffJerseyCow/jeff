@@ -9,6 +9,10 @@ IMAGES = {'llvm': ('jeffjerseycow/llvm', '8.0'),
           'libfuzzer': ('jeffjerseycow/libfuzzer', 'v0.0.2'),
           'debug': ('jeffjerseycow/debug', 'v0.0.1')}
 
+FLAGS = ['-g', '-O0', '-fsanitize=fuzzer', '-fsanitize=address']
+
+OUTPUT = ['fuzz.me']
+
 def addSubparsers(subparsers):
     debugParser = subparsers.add_parser('debug')
     debugParser.add_argument('directory', type=str, help='directory location to debug')
@@ -16,7 +20,8 @@ def addSubparsers(subparsers):
     fuzzParser = subparsers.add_parser('libfuzzer')
     fuzzParser.add_argument('directory', type=str, help='directory location to fuzz')
     fuzzParser.add_argument('-c', '--corpus', type=str, help='corpus directory')
-    fuzzParser.add_argument('-a', '--artifacts', type=str, help='corpus directory')
+    fuzzParser.add_argument('-a', '--artifacts', type=str, help='artifacts directory')
+    fuzzParser.add_argument('--no-asan', action='store_true', help='disable address sanitizer')
 
 def main():
     # check Docker installed
@@ -38,11 +43,15 @@ def main():
         parser.print_help()
         return False
 
+    # remove asan
+    if args.no_asan:
+        FLAGS.remove('-fsanitize=address')
+
     # select command
     if args.command == 'debug':
-        return jeffDebug(args, IMAGES[args.command])
+        return jeffDebug(args, FLAGS, OUTPUT, IMAGES[args.command])
     elif args.command == 'libfuzzer':
-        return jeffFuzz(args, IMAGES[args.command])
+        return jeffFuzz(args, FLAGS, OUTPUT, IMAGES[args.command])
 
 if __name__ == '__main__':
     sys.exit(main())
