@@ -1,0 +1,6 @@
+{
+  "baseDomain": "",
+  "commands": ["jeff_debug"],
+  "flags": ["-g", "-O0", "-fsanitize=address", "-fsanitize=fuzzer"],
+  "output": ["run.me"]
+}

@@ -1,6 +1,28 @@
 import re
 import os
+import json
+import importlib
 import subprocess
+
+def loadConfig():
+    jeffDir = os.path.dirname(__file__)
+    jeffConfig = os.path.join(jeffDir, 'config', 'jeffconfig.json')
+
+    if not os.path.isfile(jeffConfig):
+        print('[-] missing configuration file')
+        return False
+
+    with open(jeffConfig, 'r') as configFile:
+        return json.loads(configFile.read())
+
+def loadCommands(config):
+    commands = {}
+    importPrefix = 'jeff.commands'
+
+    for name in config['commands']:
+        commands[name] = importlib.import_module('%s.%s' % (importPrefix, name))
+
+    return commands
 
 def checkDocker():
     try:

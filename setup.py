@@ -9,4 +9,6 @@ setup(
         url='https://github.com/JeffJerseyCow/jeff',
         packages=find_packages(),
         entry_points={'console_scripts':['jeff=jeff.jeffctl:main']},
+        include_package_data=True,
+        package_data={'':['config/jeffconfig.json']},
 )

@@ -1,23 +1,11 @@
 #!/usr/bin/env python3
+import os
 import sys
 import argparse
 import subprocess
-from jeff.utils import checkDocker, checkImages
-from jeff.commands import jeffDebug, jeffFuzz
-
-IMAGES = {'llvm': ('jeffjerseycow/llvm', '8.0'),
-          'libfuzzer': ('jeffjerseycow/libfuzzer', 'v0.0.2'),
-          'debug': ('jeffjerseycow/debug', 'v0.0.1')}
-
-FLAGS = ['-g', '-O0', '-fsanitize=fuzzer', '-fsanitize=address']
-
-OUTPUT = ['fuzz.me']
+from jeff.utils import loadConfig, loadCommands
 
 def addSubparsers(subparsers):
-    debugParser = subparsers.add_parser('debug')
-    debugParser.add_argument('directory', type=str, help='directory location to debug')
-    debugParser.add_argument('--no-asan', action='store_true', help='disable address sanitizer')
-
     fuzzParser = subparsers.add_parser('libfuzzer')
     fuzzParser.add_argument('directory', type=str, help='directory location to fuzz')
     fuzzParser.add_argument('-c', '--corpus', type=str, help='corpus directory')
@@ -25,6 +13,29 @@ def addSubparsers(subparsers):
     fuzzParser.add_argument('--no-asan', action='store_true', help='disable address sanitizer')
 
 def main():
+    # load configuration
+    jeffConfig = loadConfig()
+    if not jeffConfig:
+        return False
+
+    # create parsers
+    parser = argparse.ArgumentParser('jeff')
+    subparsers = parser.add_subparsers(dest='command')
+
+    # load commands plugins
+    commands = loadCommands(jeffConfig)
+
+    # register parsers
+    for _, module in commands.items():
+        module.parser(subparsers)
+
+    # parse arguments
+    args = parser.parse_args()
+    if not args.command:
+        parser.print_help()
+        return False
+
+    return True
     # check Docker installed
     if not checkDocker():
         return False
