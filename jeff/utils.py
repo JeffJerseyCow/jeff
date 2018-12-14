@@ -91,5 +91,4 @@ def updateConfig(config):
 
     with open(jeffConfigPath, 'w') as configFile:
         configFile.write(json.dumps(config))
-
-    print('[*] updated configuration file "%s"' % jeffConfigPath)
+        
