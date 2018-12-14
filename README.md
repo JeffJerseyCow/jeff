@@ -1,25 +1,26 @@
 # jeff
 Wrapper for Dynamic Analysis Docker Images
 
-This is a quick and dirty shell script that wraps the ```docker run`` images for dynamic analysis.
-
 ## Requirements
-- docker
-- access to jeffjerseycow/llvm:8.0 image
-- access to jeffjerseycow/libfuzzer:v0.0.2
-- access to jeffjerseycow/debug:v0.0.1
+- Docker
 
-## Fuzz
-The fuzz mode takes a directory path as its second positional argument which must contain all source code and a ```build.sh``` script that outputs an libFuzzer executable ```fuzz.me```. For more guidance see https://github.com/JeffJerseyCow/dockerimages/tree/master/libFuzzer
+_Note: Your user account needs to be a member of the docker group_
 
-## Examples
-Install and simply type ```jeff debug ~/directory``` or ```jeff fuzz ~/directory```
+```sudo usermod -aG docker $USER```
 
-In both cases a new shell is spawed with a copy of the contents ```~/directory```
+## Commands
+### Config
+```jeff config``` provides access to the configuration file
+- ```jeff config --show``` prints current configuration
+- ```jeff config -b example.com``` changes the base domain
+- ```jeff config --reset-base-domain``` resets the base domain
 
-The debug image requires access to the ```--privileged``` argument as process debugging must be capable ot disabling ASLR.
+### Debug
+```jeff debug``` provides access to a debugging environment
+- ```jeff debug DIR``` copies the contents of DIR into a debugging environment
 
-fuzzer has the aditional optional arguments ```-a ~/artifacts/directory``` and ```-c ~/corpus/directory``` to easily copy corpus and crash artifacts between your local machine and image. For instance:
-- ```jeff -a /tmp/artifacts -c /tmp/corpus fuzz ~/directory```
+### libFuzzer
+```jeff libfuzzer``` provides access to the LLVM libFuzzer toolchain
+- ```jeff libfuzzer DIR``` copies the contents of DIR into a libFuzzer environment, runs a ```build.sh``` script and executes the output ```fuzz.me```
+- ```jeff libfuzzer DIR -c /corpus/dir -a /artifacts/dir``` optionally copies the corpus and/or artifacts directory contents to a directory of your choice
 
-_Note that the optional arguments must precede the operation modes ```fuzz``` or ```debug``` on the command line._
