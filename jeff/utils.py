@@ -5,14 +5,14 @@ import importlib
 import subprocess
 
 def loadConfig():
-    jeffDir = os.path.dirname(__file__)
-    jeffConfig = os.path.join(jeffDir, 'config', 'jeffconfig.json')
+    jeffDirPath = os.path.dirname(__file__)
+    jeffConfigPath = os.path.join(jeffDirPath, 'config', 'jeffconfig.json')
 
-    if not os.path.isfile(jeffConfig):
+    if not os.path.isfile(jeffConfigPath):
         print('[-] missing configuration file')
         return False
 
-    with open(jeffConfig, 'r') as configFile:
+    with open(jeffConfigPath, 'r') as configFile:
         return json.loads(configFile.read())
 
 def loadCommands(config):
@@ -36,18 +36,27 @@ def checkDocker():
         print('[-] add user "%s" to docker group' % os.getenv("USER"))
     return False
 
-def checkImages(images):
+def checkImage(image, config):
+    imageVersion = image['version']
+
+    if config['baseDomain'] != '':
+        imageName = '%s/%s' % (config['baseDomain'], image['name'])
+    else:
+        imageName = image['name']
+
     args = ['docker', 'image', 'ls']
     output = subprocess.run(args, check=True, stdout=subprocess.PIPE).stdout.decode()
-    for k, v in images.items():
-        r = re.compile(r'%s\s+%s' % (v[0], v[1]))
-        if not r.search(output):
-            args = ['docker', 'pull', '%s:%s' % (v[0], v[1])]
-            try:
-                subprocess.run(args, stderr=subprocess.DEVNULL, check=True)
-            except subprocess.CalledProcessError:
-                print('[-] cannot download image %s:%s' % (v[0], v[1]))
-                return False
+    r = re.compile(r'%s\s+%s' % (imageName, imageVersion))
+
+    if not r.search(output):
+        args = ['docker', 'pull', '%s:%s' % (imageName, imageVersion)]
+
+        try:
+            subprocess.run(args, stderr=subprocess.DEVNULL, check=True)
+        except subprocess.CalledProcessError:
+            print('[-] cannot download image %s:%s' % (imageName, imageVersion))
+            return False
+
     return True
 
 def checkDir(dirPath):
@@ -59,3 +68,28 @@ def checkDir(dirPath):
         return False
 
     return os.path.realpath(dirPath)
+
+def updateEnv(compiler, flags, output):
+    cmdArgs = ['-e', 'COMPILER=%s' % ''.join(compiler),
+               '-e', 'FLAGS=%s' % ' '.join(flags),
+               '-e', 'OUTPUT=%s' % ''.join(output)]
+    return cmdArgs
+
+def updateImage(image, config):
+    if config['baseDomain'] != '':
+        return ['%s/%s:%s' % (config['baseDomain'], image['name'], image['version'])]
+    else:
+        return ['%s:%s' % (image['name'], image['version'])]
+
+def updateConfig(config):
+    jeffDirPath = os.path.dirname(__file__)
+    jeffConfigPath = os.path.join(jeffDirPath, 'config', 'jeffconfig.json')
+
+    if not os.path.isfile(jeffConfigPath):
+        print('[-] missing configuration file')
+        return False
+
+    with open(jeffConfigPath, 'w') as configFile:
+        configFile.write(json.dumps(config))
+
+    print('[*] updated configuration file "%s"' % jeffConfigPath)
