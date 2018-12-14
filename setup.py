@@ -1,8 +1,9 @@
+from jeff.utils import loadConfig
 from setuptools import setup, find_packages
 
 setup(
         name='jeff',
-        version='v0.0.1',
+        version=loadConfig()['version'],
         description='jeff wrapper for dynamic analysis containers',
         author='JeffJerseyCow',
         author_email='jeffjerseycow@gmail.com',

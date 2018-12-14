@@ -15,6 +15,7 @@ def main():
 
     # create parsers
     parser = argparse.ArgumentParser('jeff')
+    parser.add_argument('--version', action='version', version=jeffConfig['version'])
     subparsers = parser.add_subparsers(dest='command')
 
     # load commands plugins

@@ -1,4 +1,5 @@
 {
   "baseDomain": "",
+  "version": "v0.0.4",
   "commands": ["jeff_config", "jeff_debug", "jeff_libfuzzer"]
 }
