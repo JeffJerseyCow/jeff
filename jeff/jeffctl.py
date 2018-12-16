@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import argparse
-from jeff.utils import loadConfig, loadCommands, checkDocker
+from jeff.utils import loadConfig, loadPlugins, checkDocker
 
 def main():
     # check Docker installed
@@ -19,7 +19,7 @@ def main():
     subparsers = parser.add_subparsers(dest='command')
 
     # load commands plugins
-    commands = loadCommands(jeffConfig)
+    commands = loadPlugins(jeffConfig)
 
     # register parsers
     for _, command in commands.items():

@@ -1,4 +1,4 @@
-from jeff.utils import updateConfig
+from jeff.core import updateConfig
 
 def parser(subparsers):
     debugParser = subparsers.add_parser('config')
