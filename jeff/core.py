@@ -71,7 +71,6 @@ def updateConfig(config):
         configFile.write(json.dumps(config))
 
 def updateVolume(hostDir, guestDir):
-    # check input directory
     directory = checkDir(hostDir)
 
     if not directory:
@@ -83,17 +82,25 @@ def updateVolume(hostDir, guestDir):
 def updateEnv(name, value):
     return ['-e', '%s=%s' % (name, value)]
 
-def removeContainer(args):
+def startContainer(name, config, cmdArgs):
+    config['containers'].append(name)
+    updateConfig(config)
+    subprocess.run(cmdArgs)
+    return True
+
+def removeContainer(name, config):
     cmdArgs = ['docker', 'ps', '-a']
     output = subprocess.run(cmdArgs, check=True, stdout=subprocess.PIPE).stdout.decode()
-    r = re.compile(r'%s' % args.name)
+    r = re.compile(r'%s' % name)
 
     if r.search(output):
-        cmdArgs = ['docker', 'container', 'rm', '--force', '%s' % args.name]
+        cmdArgs = ['docker', 'container', 'rm', '--force', '%s' % name]
         subprocess.run(cmdArgs, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL, check=True)
-        print('[*] deleted "%s"' % args.name)
+
+        # delete from config
+        config['containers'].remove(name)
+        updateConfig(config)
         return True
 
-    print('[*] container "%s" does not exist' % args.name)
     return False

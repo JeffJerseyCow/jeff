@@ -3,12 +3,12 @@ from jeff.core import checkDir, checkImage, checkContainer, updateEnv, updateIma
     updateVolume, startContainer, removeContainer
 
 def imageDict():
-    return {'name': 'jeffjerseycow/debug', 'version': 'v0.0.2'}
+    return {'name': 'jeffjerseycow/afl', 'version': 'v0.0.1'}
 
 def parser(subparsers):
-    debugParser = subparsers.add_parser('debug')
-    debugParser.add_argument('-d', '--directory', type=str, help='directory location to debug')
-    debugParser.add_argument('-n', '--name', type=str, required=True, help='name of container')
+    aflParser = subparsers.add_parser('afl')
+    aflParser.add_argument('-d', '--directory', type=str, help='directory location to fuzz')
+    aflParser.add_argument('-n', '--name', type=str, required=True, help='name of container')
 
 def run(args, config):
     # check if container exists and load
@@ -26,7 +26,7 @@ def run(args, config):
 
     # finish command string
     if args.directory:
-        cmdArgs = cmdArgs + updateVolume(args.directory, '/debug')
+        cmdArgs = cmdArgs + updateVolume(args.directory, '/fuzz')
     else:
         print('[-] directory not specified')
 

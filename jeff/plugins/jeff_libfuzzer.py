@@ -1,24 +1,16 @@
 import os
-import subprocess
 from jeff.core import checkDir, checkImage, checkContainer, updateEnv, updateImage, \
-    updateVolume, removeContainer
+    updateVolume, startContainer, removeContainer
 
 def imageDict():
     return {'name': 'jeffjerseycow/libfuzzer', 'version': 'v0.0.3'}
 
 def parser(subparsers):
-    fuzzParser = subparsers.add_parser('libfuzzer')
-    fuzzParser.add_argument('-d', '--directory', type=str, help='directory location to fuzz')
-    fuzzParser.add_argument('-n', '--name', type=str, required=True, help='name of container')
-    fuzzParser.add_argument('--rm', action='store_true', help='delete container')
+    libfuzzerParser = subparsers.add_parser('libfuzzer')
+    libfuzzerParser.add_argument('-d', '--directory', type=str, help='directory location to fuzz')
+    libfuzzerParser.add_argument('-n', '--name', type=str, required=True, help='name of container')
 
 def run(args, config):
-    # remove container
-    if args.rm and removeContainer(args):
-        return True
-    elif args.rm:
-        return False
-
     # check if container exists and load
     if checkContainer(args):
         return True
@@ -29,7 +21,7 @@ def run(args, config):
         return False
 
     # docker command string
-    cmdArgs = ['docker', 'run', '-ti', '--name', '%s' % args.name]
+    cmdArgs = ['docker', 'run', '-ti', '--name', args.name, '-h', arg.name]
 
     # finish command string
     if args.directory:
@@ -40,6 +32,6 @@ def run(args, config):
     cmdArgs = cmdArgs + updateEnv('INITIALGID', os.getgid())
     cmdArgs = cmdArgs + updateEnv('INITIALUID', os.getuid())
     cmdArgs = cmdArgs + updateImage(image, config)
-    subprocess.run(cmdArgs)
+    startContainer(args.name, config, cmdArgs)
 
     return True
