@@ -3,12 +3,12 @@ from jeff.core import checkDir, checkImage, checkContainer, updateEnv, updateIma
     updateVolume, startContainer, removeContainer
 
 def imageDict():
-    return {'name': 'jeffjerseycow/libfuzzer', 'version': 'v0.0.3'}
+    return {'name': 'jeffjerseycow/ikos', 'version': 'v0.0.1'}
 
 def parser(subparsers):
-    libfuzzerParser = subparsers.add_parser('libfuzzer')
-    libfuzzerParser.add_argument('-d', '--directory', type=str, help='directory location to fuzz')
-    libfuzzerParser.add_argument('-n', '--name', type=str, required=True, help='name of container')
+    ikosParser = subparsers.add_parser('ikos')
+    ikosParser.add_argument('-d', '--directory', type=str, help='directory location to analyze')
+    ikosParser.add_argument('-n', '--name', type=str, required=True, help='name of container')
 
 def run(args, config):
     # check if container exists and load
@@ -25,7 +25,7 @@ def run(args, config):
 
     # finish command string
     if args.directory:
-        cmdArgs = cmdArgs + updateVolume(args.directory, '/fuzz')
+        cmdArgs = cmdArgs + updateVolume(args.directory, '/ikos')
     else:
         print('[-] directory not specified')
 
