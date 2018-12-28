@@ -3,7 +3,7 @@ from jeff.core import checkDir, checkImage, checkContainer, updateEnv, updateIma
     updateVolume, startContainer, removeContainer
 
 def imageDict():
-    return {'name': 'jeffjerseycow/ikos', 'version': 'v0.0.1'}
+    return {'name': 'jeffjerseycow/ikos', 'version': 'latest'}
 
 def parser(subparsers):
     ikosParser = subparsers.add_parser('ikos')
@@ -12,7 +12,7 @@ def parser(subparsers):
 
 def run(args, config):
     # check if container exists and load
-    if checkContainer(args):
+    if checkContainer(args, config):
         return True
 
     # download image

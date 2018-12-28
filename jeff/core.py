@@ -36,20 +36,23 @@ def checkDir(directory):
 
     return os.path.realpath(directory)
 
-def checkContainer(args):
+def checkContainer(args, config):
     cmdArgs = ['docker', 'ps', '-a']
-    output = subprocess.run(cmdArgs, check=True, stdout=subprocess.PIPE).stdout.decode()
-    r = re.compile(r'%s' % args.name)
-    if r.search(output):
-        cmdArgs = ['docker', 'start', '%s' % args.name]
-        subprocess.run(cmdArgs, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL, check=True)
+    output = subprocess.run(cmdArgs, check=True, stdout=subprocess.PIPE).stdout
+    output = output.decode().splitlines()
 
-        cmdArgs = ['docker', 'attach', '%s' % args.name]
-        print('[*] loading existing container "%s"' % args.name)
-        subprocess.run(cmdArgs)
+    for line in output:
+        containerName = re.search(r'(\w+)\s*$', line)
+        if args.name == containerName.group(0) and args.name in config['containers']:
+            cmdArgs = ['docker', 'start', '%s' % args.name]
+            subprocess.run(cmdArgs, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL, check=True)
 
-        return True
+            cmdArgs = ['docker', 'attach', '%s' % args.name]
+            print('[*] loading existing container "%s"' % args.name)
+            subprocess.run(cmdArgs)
+
+            return True
 
     return False
 
@@ -83,24 +86,33 @@ def updateEnv(name, value):
     return ['-e', '%s=%s' % (name, value)]
 
 def startContainer(name, config, cmdArgs):
-    config['containers'].append(name)
-    updateConfig(config)
-    subprocess.run(cmdArgs)
-    return True
+    try:
+        config['containers'].append(name)
+        updateConfig(config)
+        subprocess.run(cmdArgs, check=True)
+        return True
+        
+    except subprocess.CalledProcessError:
+        config['containers'].remove(name)
+        updateConfig(config)
+        print('[-] cannot create container "%s"' % name)
+        return False
 
 def removeContainer(name, config):
     cmdArgs = ['docker', 'ps', '-a']
-    output = subprocess.run(cmdArgs, check=True, stdout=subprocess.PIPE).stdout.decode()
-    r = re.compile(r'%s' % name)
+    output = subprocess.run(cmdArgs, check=True, stdout=subprocess.PIPE).stdout
+    output = output.decode().splitlines()
 
-    if r.search(output):
-        cmdArgs = ['docker', 'container', 'rm', '--force', '%s' % name]
-        subprocess.run(cmdArgs, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL, check=True)
+    for line in output:
+        containerName = re.search(r'(\w+)\s*$', line)
+        if name == containerName.group(0) and name in config['containers']:
+            cmdArgs = ['docker', 'container', 'rm', '--force', '%s' % name]
+            subprocess.run(cmdArgs, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL, check=True)
 
-        # delete from config
-        config['containers'].remove(name)
-        updateConfig(config)
-        return True
+            # delete from config
+            config['containers'].remove(name)
+            updateConfig(config)
+            return True
 
     return False

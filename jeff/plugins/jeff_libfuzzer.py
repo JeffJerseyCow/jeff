@@ -3,7 +3,7 @@ from jeff.core import checkDir, checkImage, checkContainer, updateEnv, updateIma
     updateVolume, startContainer, removeContainer
 
 def imageDict():
-    return {'name': 'jeffjerseycow/libfuzzer', 'version': 'v0.0.3'}
+    return {'name': 'jeffjerseycow/libfuzzer', 'version': 'latest'}
 
 def parser(subparsers):
     libfuzzerParser = subparsers.add_parser('libfuzzer')
@@ -12,7 +12,7 @@ def parser(subparsers):
 
 def run(args, config):
     # check if container exists and load
-    if checkContainer(args):
+    if checkContainer(args, config):
         return True
 
     # download image

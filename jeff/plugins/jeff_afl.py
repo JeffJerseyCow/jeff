@@ -3,7 +3,7 @@ from jeff.core import checkDir, checkImage, checkContainer, updateEnv, updateIma
     updateVolume, startContainer, removeContainer
 
 def imageDict():
-    return {'name': 'jeffjerseycow/afl', 'version': 'v0.0.1'}
+    return {'name': 'jeffjerseycow/afl', 'version': 'latest'}
 
 def parser(subparsers):
     aflParser = subparsers.add_parser('afl')
@@ -12,7 +12,7 @@ def parser(subparsers):
 
 def run(args, config):
     # check if container exists and load
-    if checkContainer(args):
+    if checkContainer(args, config):
         return True
 
     # download image
