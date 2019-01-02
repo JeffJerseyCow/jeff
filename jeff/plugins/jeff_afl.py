@@ -26,7 +26,7 @@ def run(args, config):
 
     # finish command string
     if args.directory:
-        cmdArgs = cmdArgs + updateVolume(args.directory, '/fuzz')
+        cmdArgs = cmdArgs + updateVolume(args.directory, '/afl')
     else:
         print('[-] directory not specified')
 
