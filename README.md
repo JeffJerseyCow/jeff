@@ -17,7 +17,7 @@ Wrapper for Dynamic Analysis Docker Images
 - ```jeff config --base-domain BASE_DOMAIN``` set the base domain to BASE_DOMAIN
 - ```jeff config --reset-base-domain``` resets the base domain
 
-*Note: The base domain can remain default -- it's configurable for air-grapped network*
+*Note: The base domain can remain default -- it's configurable for air-gapped network*
 
 ### General
 - ```jeff debug``` cgdb, gdb, gef, peda
@@ -25,3 +25,4 @@ Wrapper for Dynamic Analysis Docker Images
 - ```jeff afl``` latest afl build
 - ```jeff ikos``` NASA abstract interpretation  engine
 
+All commands have a mandatory ```--name NAME``` flag and an optional ```-directory DIRECTORY``` flag that maps DIRECTORY into the container.
