@@ -1,7 +1,8 @@
 from jeff.core import updateConfig, removeContainer
 
 def parser(subparsers):
-    configParser = subparsers.add_parser('config')
+    group = subparsers.add_parser('config')
+    configParser = group.add_mutually_exclusive_group()
     configParser.add_argument('--show', action='store_true', help='show configuration')
     configParser.add_argument('--list', action='store_true', help='show configuration')
     configParser.add_argument('--rm', type=str, help='delete container')
