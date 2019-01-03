@@ -19,11 +19,9 @@ Wrapper for Dynamic Analysis Docker Images
 
 *Note: The base domain can remain default -- it's configurable for air-grapped network*
 
-- ```jeff debug```
-- ```jeff libfuzzer```
-- ```jeff afl```
-- ```jeff ikos```
+### General
+- ```jeff debug``` cgdb, gdb, gef, peda
+- ```jeff libfuzzer``` fuzzer from llvm 8.0
+- ```jeff afl``` latest afl build
+- ```jeff ikos``` NASA abstract interpretation  engine
 
-## General
-All commands have the two following options.
-- 
