@@ -26,3 +26,6 @@ Wrapper for Dynamic Analysis Docker Images
 - ```jeff ikos``` NASA abstract interpretation  engine
 
 All commands have a mandatory ```--name NAME``` flag and an optional ```-directory DIRECTORY``` flag that maps DIRECTORY into the container.
+
+## Install
+Git clone the repository and use ```pip3 install . --upgrade``` within the source jeff directory.
