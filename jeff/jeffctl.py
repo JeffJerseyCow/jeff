@@ -31,6 +31,10 @@ def main():
         parser.print_help()
         return False
 
+    # check directory
+    if 'directory' in args and not args.directory:
+        print('Directory not specified')
+
     # run command
     return commands['jeff_%s' % args.command].run(args, jeffConfig)
 

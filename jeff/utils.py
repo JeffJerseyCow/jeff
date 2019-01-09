@@ -8,7 +8,7 @@ def loadConfig():
     jeffConfigPath = os.path.join(jeffDirPath, 'config', 'jeffconfig.json')
 
     if not os.path.isfile(jeffConfigPath):
-        print('[-] missing configuration file')
+        print('Error: Missing configuration file')
         return False
 
     with open(jeffConfigPath, 'r') as configFile:
@@ -30,7 +30,7 @@ def checkDocker():
             stderr=subprocess.DEVNULL, check=True)
         return True
     except FileNotFoundError:
-        print('[-] install docker.io or docker ce')
+        print('Error: Install docker.io or docker ce')
     except subprocess.CalledProcessError:
-        print('[-] add user "%s" to docker group' % os.getenv("USER"))
+        print('Error: Add user "%s" to docker group' % os.getenv("USER"))
     return False

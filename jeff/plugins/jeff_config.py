@@ -21,20 +21,20 @@ def run(args, config):
 
     elif args.rm:
         if removeContainer(args.rm, config):
-            print('[*] deleted "%s"' % args.rm)
+            print('Deleted "%s"' % args.rm)
             return True
         else:
-            print('[*] container "%s" does not exist' % args.rm)
+            print('Error: Container "%s" does not exist' % args.rm)
             return False
 
     elif args.base_domain:
         config['baseDomain'] = args.base_domain
         updateConfig(config)
-        print('[*] changed base domain to "%s"' % args.base_domain)
+        print('Changed base domain to "%s"' % args.base_domain)
         return True
 
     elif args.reset_base_domain:
         config['baseDomain'] = ""
         updateConfig(config)
-        print('[*] reset base domain')
+        print('Reset base domain')
         return True

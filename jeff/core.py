@@ -21,7 +21,7 @@ def checkImage(image, config):
         try:
             subprocess.run(cmdArgs, stderr=subprocess.DEVNULL, check=True)
         except subprocess.CalledProcessError:
-            print('[-] cannot download image %s:%s' % (imageName, imageVersion))
+            print('Error: Cannot download image %s:%s' % (imageName, imageVersion))
             return False
 
     return True
@@ -31,7 +31,7 @@ def checkDir(directory):
         return False
 
     if not os.path.isdir(directory):
-        print('[-] directory "%s" doesn\'t exist' % directory)
+        print('Error: Directory "%s" doesn\'t exist' % directory)
         return False
 
     return os.path.realpath(directory)
@@ -49,7 +49,11 @@ def checkContainer(args, config):
                 stderr=subprocess.DEVNULL, check=True)
 
             cmdArgs = ['docker', 'attach', '%s' % args.name]
-            print('[*] loading existing container "%s"' % args.name)
+            print('Loaded existing container "%s"' % args.name)
+
+            if args.directory:
+                print('Cannot configure directory for existing container')
+
             subprocess.run(cmdArgs)
 
             return True
@@ -67,7 +71,7 @@ def updateConfig(config):
     jeffConfigPath = os.path.join(jeffDirPath, 'config', 'jeffconfig.json')
 
     if not os.path.isfile(jeffConfigPath):
-        print('[-] missing configuration file')
+        print('Error: Missing configuration file')
         return False
 
     with open(jeffConfigPath, 'w') as configFile:
@@ -77,7 +81,7 @@ def updateVolume(hostDir, guestDir):
     directory = checkDir(hostDir)
 
     if not directory:
-        print('[-] unknown directory "%s"' % hostDir)
+        print('Error: Unknown directory "%s"' % hostDir)
         return False
 
     return ['-v', '%s:%s' % (directory, guestDir)]
@@ -95,7 +99,7 @@ def startContainer(name, config, cmdArgs):
     except subprocess.CalledProcessError:
         config['containers'].remove(name)
         updateConfig(config)
-        print('[-] cannot create container "%s"' % name)
+        print('Error: Cannot create container "%s"' % name)
         return False
 
 def removeContainer(name, config):
@@ -105,7 +109,6 @@ def removeContainer(name, config):
 
     for line in output:
         containerName = re.search(r'([\-a-zA-Z0-9_]+)\s*$', line)
-        print(containerName.group(0))
         if name == containerName.group(0) and name in config['containers']:
             cmdArgs = ['docker', 'container', 'rm', '--force', '%s' % name]
             subprocess.run(cmdArgs, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,

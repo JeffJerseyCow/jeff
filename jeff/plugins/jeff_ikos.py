@@ -26,8 +26,6 @@ def run(args, config):
     # finish command string
     if args.directory:
         cmdArgs = cmdArgs + updateVolume(args.directory, '/ikos')
-    else:
-        print('[-] directory not specified')
 
     cmdArgs = cmdArgs + updateEnv('INITIALGID', os.getgid())
     cmdArgs = cmdArgs + updateEnv('INITIALUID', os.getuid())
