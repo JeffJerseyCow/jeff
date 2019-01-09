@@ -23,9 +23,9 @@ Wrapper for Dynamic Analysis Docker Images
 - ```jeff debug``` cgdb, gdb, gef, peda
 - ```jeff libfuzzer``` fuzzer from llvm 8.0
 - ```jeff afl``` latest afl build
-- ```jeff ikos``` NASA abstract interpretation  engine
-- ```jeff qsym``` QSYM concolic execution engine
-- ```jeff afl-ppc``` AFL QEMU configured for PowerPC target
+- ```jeff ikos``` nasa abstract interpretation  engine
+- ```jeff qsym``` qsym concolic execution engine
+- ```jeff afl-ppc``` afl qemu configured for PowerPC target
 
 All commands have a mandatory ```--name NAME``` flag and an optional ```--directory DIRECTORY``` flag that maps DIRECTORY into the container.
 
