@@ -42,7 +42,7 @@ def checkContainer(args, config):
     output = output.decode().splitlines()
 
     for line in output:
-        containerName = re.search(r'(\w+)\s*$', line)
+        containerName = re.search(r'([\-a-zA-Z0-9_]+)\s*$', line)
         if args.name == containerName.group(0) and args.name in config['containers']:
             cmdArgs = ['docker', 'start', '%s' % args.name]
             subprocess.run(cmdArgs, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
@@ -91,7 +91,7 @@ def startContainer(name, config, cmdArgs):
         updateConfig(config)
         subprocess.run(cmdArgs, check=True)
         return True
-        
+
     except subprocess.CalledProcessError:
         config['containers'].remove(name)
         updateConfig(config)
@@ -104,7 +104,8 @@ def removeContainer(name, config):
     output = output.decode().splitlines()
 
     for line in output:
-        containerName = re.search(r'(\w+)\s*$', line)
+        containerName = re.search(r'([\-a-zA-Z0-9_]+)\s*$', line)
+        print(containerName.group(0))
         if name == containerName.group(0) and name in config['containers']:
             cmdArgs = ['docker', 'container', 'rm', '--force', '%s' % name]
             subprocess.run(cmdArgs, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
