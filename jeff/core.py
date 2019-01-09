@@ -21,7 +21,7 @@ def checkImage(image, config):
         try:
             subprocess.run(cmdArgs, stderr=subprocess.DEVNULL, check=True)
         except subprocess.CalledProcessError:
-            print('Error: Cannot download image %s:%s' % (imageName, imageVersion))
+            print('Error: Cannot download image "%s:%s"' % (imageName, imageVersion))
             return False
 
     return True
