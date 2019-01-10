@@ -4,7 +4,7 @@ def parser(subparsers):
     group = subparsers.add_parser('config')
     configParser = group.add_mutually_exclusive_group()
     configParser.add_argument('--show', action='store_true', help='show configuration')
-    configParser.add_argument('--list', action='store_true', help='show configuration')
+    configParser.add_argument('--list', action='store_true', help='list containers')
     configParser.add_argument('--rm', type=str, help='delete container')
     configParser.add_argument('--base-domain', type=str, help='change base domain')
     configParser.add_argument('--reset-base-domain', action='store_true', help='reset base domain')
