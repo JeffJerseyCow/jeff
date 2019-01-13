@@ -1,8 +1,6 @@
-import os
-from jeff.core import checkDir, checkImage, checkContainer, updateEnv, updateImage, \
-    updateVolume, startContainer, removeContainer
+from jeff.core import JeffContainer
 
-def imageDict():
+def image():
     return {'name': 'jeffjerseycow/libfuzzer', 'version': 'latest'}
 
 def parser(subparsers):
@@ -11,25 +9,19 @@ def parser(subparsers):
     libfuzzerParser.add_argument('-n', '--name', type=str, required=True, help='name of container')
 
 def run(args, config):
+    libfuzzer = JeffContainer(image(), args, config)
+
     # check if container exists and load
-    if checkContainer(args, config):
+    if libfuzzer.checkContainer():
         return True
 
     # download image
-    image = imageDict()
-    if not checkImage(image, config):
+    if not libfuzzer.checkImage():
         return False
 
-    # docker command string
-    cmdArgs = ['docker', 'run', '-ti', '--name', args.name, '-h', args.name]
+    if args.directory and not libfuzzer.addVolume(args.directory, '/libfuzzer'):
+        return False
 
-    # finish command string
-    if args.directory:
-        cmdArgs = cmdArgs + updateVolume(args.directory, '/libfuzzer')
-
-    cmdArgs = cmdArgs + updateEnv('INITIALGID', os.getgid())
-    cmdArgs = cmdArgs + updateEnv('INITIALUID', os.getuid())
-    cmdArgs = cmdArgs + updateImage(image, config)
-    startContainer(args.name, config, cmdArgs)
+    libfuzzer.start()
 
     return True

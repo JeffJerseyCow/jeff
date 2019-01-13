@@ -1,8 +1,6 @@
-import os
-from jeff.core import checkDir, checkImage, checkContainer, updateEnv, updateImage, \
-    updateVolume, startContainer, removeContainer
+from jeff.core import JeffContainer
 
-def imageDict():
+def image():
     return {'name': 'jeffjerseycow/afl', 'version': 'latest'}
 
 def parser(subparsers):
@@ -11,26 +9,19 @@ def parser(subparsers):
     aflParser.add_argument('-n', '--name', type=str, required=True, help='name of container')
 
 def run(args, config):
+    afl = JeffContainer(image(), args, config, privileged=True)
+
     # check if container exists and load
-    if checkContainer(args, config):
+    if afl.checkContainer():
         return True
 
     # download image
-    image = imageDict()
-    if not checkImage(image, config):
+    if not afl.checkImage():
         return False
 
-    # docker command string
-    cmdArgs = ['docker', 'run', '-ti', '--privileged', '--name', args.name,
-               '-h', args.name]
+    if args.directory and not afl.addVolume(args.directory, '/afl'):
+        return False
 
-    # finish command string
-    if args.directory:
-        cmdArgs = cmdArgs + updateVolume(args.directory, '/afl')
-
-    cmdArgs = cmdArgs + updateEnv('INITIALGID', os.getgid())
-    cmdArgs = cmdArgs + updateEnv('INITIALUID', os.getuid())
-    cmdArgs = cmdArgs + updateImage(image, config)
-    startContainer(args.name, config, cmdArgs)
+    afl.start()
 
     return True

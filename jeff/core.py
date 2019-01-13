@@ -2,121 +2,113 @@ import os
 import re
 import json
 import subprocess
+from jeff.utils import updateConfig
 
-def checkImage(image, config):
-    imageVersion = image['version']
+class JeffContainer:
 
-    if config['baseDomain'] != '':
-        imageName = '%s/%s' % (config['baseDomain'], image['name'])
-    else:
-        imageName = image['name']
+    def __init__(self, image, args, config, privileged=False):
+        if config['baseDomain'] != '':
+            self._imageName = '%s/%s' % (config['baseDomain'], image['name'])
+        else:
+            self._imageName = image['name']
 
-    cmdArgs = ['docker', 'image', 'ls']
-    output = subprocess.run(cmdArgs, check=True, stdout=subprocess.PIPE).stdout.decode()
-    r = re.compile(r'%s\s+%s' % (imageName, imageVersion))
+        self._imageVersion = image['version']
+        self._args = args
+        self._config = config
+        self._privileged = privileged
+        self._volumes = []
+        self._flags = []
 
-    if not r.search(output):
-        cmdArgs = ['docker', 'pull', '%s:%s' % (imageName, imageVersion)]
+    def checkImage(self):
+        cmdArgs = ['docker', 'image', 'ls']
+        output = subprocess.run(cmdArgs, check=True, stdout=subprocess.PIPE).stdout.decode()
+        r = re.compile(r'%s\s+%s' % (self._imageName, self._imageVersion))
 
-        try:
-            subprocess.run(cmdArgs, stderr=subprocess.DEVNULL, check=True)
-        except subprocess.CalledProcessError:
-            print('Error: Cannot download image "%s:%s"' % (imageName, imageVersion))
-            return False
+        if not r.search(output):
+            cmdArgs = ['docker', 'pull', '%s:%s' % (self._imageName, self._imageVersion)]
 
-    return True
+            try:
+                subprocess.run(cmdArgs, stderr=subprocess.DEVNULL, check=True)
+            except subprocess.CalledProcessError:
+                print('Error: Cannot download image %s:%s' % (self._imageName, self._imageVersion))
+                return False
 
-def checkDir(directory):
-    if not directory:
-        return False
-
-    if not os.path.isdir(directory):
-        print('Error: Directory "%s" doesn\'t exist' % directory)
-        return False
-
-    return os.path.realpath(directory)
-
-def checkContainer(args, config):
-    cmdArgs = ['docker', 'ps', '-a']
-    output = subprocess.run(cmdArgs, check=True, stdout=subprocess.PIPE).stdout
-    output = output.decode().splitlines()
-
-    for line in output:
-        containerName = re.search(r'([\-a-zA-Z0-9_]+)\s*$', line)
-        if args.name == containerName.group(0) and args.name in config['containers']:
-            cmdArgs = ['docker', 'start', '%s' % args.name]
-            subprocess.run(cmdArgs, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL, check=True)
-
-            cmdArgs = ['docker', 'attach', '%s' % args.name]
-            print('Loaded existing container "%s"' % args.name)
-
-            if args.directory:
-                print('Cannot configure directory for existing container')
-
-            subprocess.run(cmdArgs)
-
-            return True
-
-    return False
-
-def updateImage(image, config):
-    if config['baseDomain'] != '':
-        return ['%s/%s:%s' % (config['baseDomain'], image['name'], image['version'])]
-    else:
-        return ['%s:%s' % (image['name'], image['version'])]
-
-def updateConfig(config):
-    jeffDirPath = os.path.dirname(__file__)
-    jeffConfigPath = os.path.join(jeffDirPath, 'config', 'jeffconfig.json')
-
-    if not os.path.isfile(jeffConfigPath):
-        print('Error: Missing configuration file')
-        return False
-
-    with open(jeffConfigPath, 'w') as configFile:
-        configFile.write(json.dumps(config))
-
-def updateVolume(hostDir, guestDir):
-    directory = checkDir(hostDir)
-
-    if not directory:
-        print('Error: Unknown directory "%s"' % hostDir)
-        return False
-
-    return ['-v', '%s:%s' % (directory, guestDir)]
-
-def updateEnv(name, value):
-    return ['-e', '%s=%s' % (name, value)]
-
-def startContainer(name, config, cmdArgs):
-    try:
-        config['containers'].append(name)
-        updateConfig(config)
-        subprocess.run(cmdArgs, check=True)
         return True
 
-    except subprocess.CalledProcessError:
-        config['containers'].remove(name)
-        updateConfig(config)
-        print('Error: Cannot create container "%s"' % name)
+    def checkContainer(self):
+        cmdArgs = ['docker', 'ps', '-a']
+        output = subprocess.run(cmdArgs, check=True, stdout=subprocess.PIPE).stdout
+        output = output.decode().splitlines()
+
+        for line in output:
+            containerName = re.search(r'([\-a-zA-Z0-9_]+)\s*$', line)
+
+            if self._args.name == containerName.group(0) and self._args.name in self._config['containers']:
+                cmdArgs = ['docker', 'start', '%s' % self._args.name]
+                subprocess.run(cmdArgs, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL, check=True)
+
+                cmdArgs = ['docker', 'attach', '%s' % self._args.name]
+                print('Loaded existing container %s' % self._args.name)
+
+                if self._args.directory:
+                    print('Cannot configure directory for existing container')
+
+                subprocess.run(cmdArgs)
+                return True
+
         return False
 
-def removeContainer(name, config):
-    cmdArgs = ['docker', 'ps', '-a']
-    output = subprocess.run(cmdArgs, check=True, stdout=subprocess.PIPE).stdout
-    output = output.decode().splitlines()
+    def _addImage(self):
+        if self._config['baseDomain'] != '':
+            return ['%s/%s:%s' % (self._config['baseDomain'], self._imageName, self._imageVersion)]
+        else:
+            return ['%s:%s' % (self._imageName, self._imageVersion)]
 
-    for line in output:
-        containerName = re.search(r'([\-a-zA-Z0-9_]+)\s*$', line)
-        if name == containerName.group(0) and name in config['containers']:
-            cmdArgs = ['docker', 'container', 'rm', '--force', '%s' % name]
-            subprocess.run(cmdArgs, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL, check=True)
+    def _addEnv(self, name, value):
+        return ['-e', '%s=%s' % (name, value)]
 
-            # delete from config
-            config['containers'].remove(name)
-            updateConfig(config)
+    def addVolume(self, hostDir, guestDir):
+        if not hostDir:
+            return False
+
+        if not os.path.isdir(hostDir):
+            print('Error: Directory %s doesn\'t exist' % hostDir)
+            return False
+
+        directory = os.path.realpath(hostDir)
+        self._volumes = self._volumes + ['-v', '%s:%s' % (directory, guestDir)]
+        return True
+
+    def addFlags(self, flags):
+        self._flags = self._flags + flags
+        return True
+
+    def start(self):
+        cmdArgs = ['docker', 'run', '-ti', '--name', self._args.name,
+                   '-h', self._args.name]
+
+        if self._privileged:
+            cmdArgs = cmdArgs + ['--privileged']
+
+        cmdArgs = cmdArgs + self._addEnv('INITIALGID', os.getgid())
+        cmdArgs = cmdArgs + self._addEnv('INITIALUID', os.getuid())
+        cmdArgs = cmdArgs + self._volumes
+        cmdArgs = cmdArgs + self._flags
+        cmdArgs = cmdArgs + self._addImage()
+
+        try:
+            self._config['containers'].append(self._args.name)
+            updateConfig(self._config)
+
+            if 'directory' in self._args and not self._args.directory:
+                print('Directory not specified')
+
+            subprocess.run(cmdArgs, check=True)
             return True
 
-    return False
+        except subprocess.CalledProcessError:
+            self._config['containers'].remove(self._args.name)
+            updateConfig(self._config)
+            print('Error: Cannot create container %s' % self._args.name)
+            return False

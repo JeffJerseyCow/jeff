@@ -1,42 +1,39 @@
 #!/usr/bin/env python3
 import sys
-import argparse
-from jeff.utils import loadConfig, loadPlugins, checkDocker
+from jeff.parser import getParser
+from jeff.utils import checkDocker, loadConfig, loadPlugins, listContainers, \
+    removeContainer
 
 def main():
-    # check Docker installed
     if not checkDocker():
         return False
 
-    # load configuration
-    jeffConfig = loadConfig()
-    if not jeffConfig:
+    config = loadConfig()
+    if not config:
         return False
 
-    # create parsers
-    parser = argparse.ArgumentParser('jeff')
-    parser.add_argument('--version', action='version', version=jeffConfig['version'])
-    subparsers = parser.add_subparsers(dest='command')
+    parser, subparsers = getParser(config)
 
-    # load commands plugins
-    commands = loadPlugins(jeffConfig)
-
-    # register parsers
+    commands = loadPlugins(config)
     for _, command in commands.items():
         command.parser(subparsers)
 
-    # parse arguments
     args = parser.parse_args()
-    if not args.command:
+
+    if args.list:
+        return listContainers(config)
+
+    elif args.remove:
+        return removeContainer(args.remove, config)
+
+    elif args.command:
+        return commands['jeff_%s' % args.command].run(args, config)
+
+    else:
         parser.print_help()
-        return False
-
-    # check directory
-    if 'directory' in args and not args.directory:
-        print('Directory not specified')
-
-    # run command
-    return commands['jeff_%s' % args.command].run(args, jeffConfig)
 
 if __name__ == '__main__':
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except KeyboardInterrupt:
+        print('Exiting')

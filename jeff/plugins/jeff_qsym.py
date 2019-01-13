@@ -1,8 +1,6 @@
-import os
-from jeff.core import checkDir, checkImage, checkContainer, updateEnv, updateImage, \
-    updateVolume, startContainer, removeContainer
+from jeff.core import JeffContainer
 
-def imageDict():
+def image():
     return {'name': 'jeffjerseycow/qsym', 'version': 'latest'}
 
 def parser(subparsers):
@@ -11,26 +9,17 @@ def parser(subparsers):
     qsymParser.add_argument('-n', '--name', type=str, required=True, help='name of container')
 
 def run(args, config):
-    # check if container exists and load
-    if checkContainer(args, config):
+    qsym = JeffContainer(image(), args, config, privileged=True)
+
+    if qsym.checkContainer():
         return True
 
-    # download image
-    image = imageDict()
-    if not checkImage(image, config):
+    if not qsym.checkImage():
         return False
 
-    # docker command string
-    cmdArgs = ['docker', 'run', '-ti', '--privileged', '--name', args.name,
-               '-h', args.name, '--cap-add=SYS_PTRACE']
+    if args.directory and not qsym.addVolume(args.directory, '/qsym'):
+        return False
 
-    # finish command string
-    if args.directory:
-        cmdArgs = cmdArgs + updateVolume(args.directory, '/qsym')
-
-    cmdArgs = cmdArgs + updateEnv('INITIALGID', os.getgid())
-    cmdArgs = cmdArgs + updateEnv('INITIALUID', os.getuid())
-    cmdArgs = cmdArgs + updateImage(image, config)
-    startContainer(args.name, config, cmdArgs)
-
+    qsym.addFlags(['--cap-add=SYS_PTRACE'])
+    qsym.start()
     return True

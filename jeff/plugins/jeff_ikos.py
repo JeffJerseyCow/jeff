@@ -1,8 +1,6 @@
-import os
-from jeff.core import checkDir, checkImage, checkContainer, updateEnv, updateImage, \
-    updateVolume, startContainer, removeContainer
+from jeff.core import JeffContainer
 
-def imageDict():
+def image():
     return {'name': 'jeffjerseycow/ikos', 'version': 'latest'}
 
 def parser(subparsers):
@@ -11,25 +9,19 @@ def parser(subparsers):
     ikosParser.add_argument('-n', '--name', type=str, required=True, help='name of container')
 
 def run(args, config):
+    ikos = JeffContainer(image(), args, config)
+
     # check if container exists and load
-    if checkContainer(args, config):
+    if ikos.checkContainer():
         return True
 
     # download image
-    image = imageDict()
-    if not checkImage(image, config):
+    if not ikos.checkImage():
         return False
 
-    # docker command string
-    cmdArgs = ['docker', 'run', '-ti', '--name', args.name, '-h', args.name]
+    if args.directory and not ikos.addVolume(args.directory, '/ikos'):
+        return False
 
-    # finish command string
-    if args.directory:
-        cmdArgs = cmdArgs + updateVolume(args.directory, '/ikos')
-
-    cmdArgs = cmdArgs + updateEnv('INITIALGID', os.getgid())
-    cmdArgs = cmdArgs + updateEnv('INITIALUID', os.getuid())
-    cmdArgs = cmdArgs + updateImage(image, config)
-    startContainer(args.name, config, cmdArgs)
+    ikos.start()
 
     return True
