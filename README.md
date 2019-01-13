@@ -27,7 +27,7 @@ Wrapper for Dynamic Analysis Docker Images
 - ```jeff afl``` latest afl build
 - ```jeff ikos``` nasa abstract interpretation  engine
 - ```jeff qsym``` qsym concolic execution engine
-- ```jeff afl-ppc``` afl qemu configured for PowerPC target
+- ```jeff afl-ppc``` afl qemu configured for PowerPc target
 - ```jeff debug-ppc``` gdb-ppc script for PowerPc target
 
 All commands have a mandatory ```--name {NAME}``` flag and an optional ```--directory {DIRECTORY}``` flag that maps {DIRECTORY} into the container.
