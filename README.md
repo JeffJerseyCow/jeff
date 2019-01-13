@@ -11,7 +11,7 @@ Wrapper for Dynamic Analysis Docker Images
 ## Commands
 ### Default
 - ```jeff --list``` list jeff containers
-- ```jeff --remove RM``` remove container {RM}
+- ```jeff --remove {RM}``` remove container {RM}
 
 ### Config
 ```jeff config``` configure jeff settings
