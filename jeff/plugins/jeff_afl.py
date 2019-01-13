@@ -11,11 +11,9 @@ def parser(subparsers):
 def run(args, config):
     afl = JeffContainer(image(), args, config, privileged=True)
 
-    # check if container exists and load
     if afl.checkContainer():
         return True
 
-    # download image
     if not afl.checkImage():
         return False
 

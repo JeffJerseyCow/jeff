@@ -13,8 +13,8 @@ def main():
         return False
 
     parser, subparsers = getParser(config)
-
     commands = loadPlugins(config)
+
     for _, command in commands.items():
         command.parser(subparsers)
 

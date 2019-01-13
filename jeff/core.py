@@ -1,12 +1,22 @@
 import os
 import re
-import json
 import subprocess
 from jeff.utils import updateConfig
 
 class JeffContainer:
 
     def __init__(self, image, args, config, privileged=False):
+        """Instantiate the JeffContainer class.
+
+        Args:
+            image: Image dictionary of the format
+                {'name': '{DOCKER_IMAGE_NAME}',
+                 'version': '{DOCKER_IMAGE_VERSION}'}.
+            args: Arguments parsed with argparse.
+            config: jeff configuration dictionary loaded with utils.loadConfig.
+            privileged: Flag to indicate if docker container requires privileged
+                        access.
+        """
         if config['baseDomain'] != '':
             self._imageName = '%s/%s' % (config['baseDomain'], image['name'])
         else:
@@ -20,6 +30,12 @@ class JeffContainer:
         self._flags = []
 
     def checkImage(self):
+        """Check host machine for docker image and pull if not found.
+
+        Returns:
+            True if the docker image was found or downloaded successfully else
+            False.
+        """
         cmdArgs = ['docker', 'image', 'ls']
         output = subprocess.run(cmdArgs, check=True, stdout=subprocess.PIPE).stdout.decode()
         r = re.compile(r'%s\s+%s' % (self._imageName, self._imageVersion))
@@ -36,6 +52,12 @@ class JeffContainer:
         return True
 
     def checkContainer(self):
+        """Check host machine for existing container with the specified
+        self._name and load if found.
+
+        Returns:
+            True if found and loaded else False.
+        """
         cmdArgs = ['docker', 'ps', '-a']
         output = subprocess.run(cmdArgs, check=True, stdout=subprocess.PIPE).stdout
         output = output.decode().splitlines()
@@ -59,16 +81,29 @@ class JeffContainer:
 
         return False
 
-    def _addImage(self):
-        if self._config['baseDomain'] != '':
-            return ['%s/%s:%s' % (self._config['baseDomain'], self._imageName, self._imageVersion)]
-        else:
-            return ['%s:%s' % (self._imageName, self._imageVersion)]
-
     def _addEnv(self, name, value):
+        """Create docker environment string of the form {name}={value}.
+
+        Args:
+            name: Name of the environment variable to set.
+            value: Value of the environment variable to set.
+
+        Returns:
+            docker environment string list.
+        """
         return ['-e', '%s=%s' % (name, value)]
 
     def addVolume(self, hostDir, guestDir):
+        """Create docker volume string of the form {hostDir}/:{guestDir}/.
+
+        Args:
+            hostDir: Host directory to mount.
+            guestDir: Mount point in the docker container.
+
+        Returns:
+            docker volume string list else False if the host directory doesn't
+            exists.
+        """
         if not hostDir:
             return False
 
@@ -81,10 +116,35 @@ class JeffContainer:
         return True
 
     def addFlags(self, flags):
+        """Create custom flags to the docker string.
+
+        Args:
+            flags: List containg the additional flags.
+
+        Returns:
+            docker flag string list.
+        """
         self._flags = self._flags + flags
         return True
 
+    def _addImage(self):
+        """Create docker image string of the form
+        {BASE_DOMAIN}/{DOCKER_IMAGE_NAM}:{DOCKER_IMAGE_VERSION}.
+
+        Returns:
+            docker image string list.
+        """
+        if self._config['baseDomain'] != '':
+            return ['%s/%s:%s' % (self._config['baseDomain'], self._imageName, self._imageVersion)]
+        else:
+            return ['%s:%s' % (self._imageName, self._imageVersion)]
+
     def start(self):
+        """Create and run docker container.
+
+        Returns:
+            True if container is created and loaded else False.
+        """
         cmdArgs = ['docker', 'run', '-ti', '--name', self._args.name,
                    '-h', self._args.name]
 

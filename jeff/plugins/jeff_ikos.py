@@ -11,11 +11,9 @@ def parser(subparsers):
 def run(args, config):
     ikos = JeffContainer(image(), args, config)
 
-    # check if container exists and load
     if ikos.checkContainer():
         return True
 
-    # download image
     if not ikos.checkImage():
         return False
 

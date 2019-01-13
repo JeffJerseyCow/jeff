@@ -11,11 +11,9 @@ def parser(subparsers):
 def run(args, config):
     libfuzzer = JeffContainer(image(), args, config)
 
-    # check if container exists and load
     if libfuzzer.checkContainer():
         return True
 
-    # download image
     if not libfuzzer.checkImage():
         return False
 
