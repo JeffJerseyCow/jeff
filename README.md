@@ -30,7 +30,7 @@ Wrapper for Dynamic Analysis Docker Images
 - ```jeff afl-ppc``` afl qemu configured for PowerPC target
 - ```jeff debug-ppc``` gdb-ppc script for PowerPc target
 
-All commands have a mandatory ```--name {NAME}``` flag and an optional ```--directory {DIRECTORY}``` flag that maps DIRECTORY into the container.
+All commands have a mandatory ```--name {NAME}``` flag and an optional ```--directory {DIRECTORY}``` flag that maps {DIRECTORY} into the container.
 
 ## Install
 Git clone the repository and use ```pip3 install . --upgrade``` within the source jeff directory.
