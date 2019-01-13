@@ -9,12 +9,14 @@ Wrapper for Dynamic Analysis Docker Images
 ```sudo usermod -aG docker $USER```
 
 ## Commands
+### Default
+- ```jeff --list``` list jeff containers
+- ```jeff --remove RM``` remove container {RM}
+
 ### Config
 ```jeff config``` configure jeff settings
 - ```jeff config --show``` prints current configuration
-- ```jeff config --list``` list jeff containers
-- ```jeff config --rm RM``` remove containers called RM
-- ```jeff config --base-domain BASE_DOMAIN``` set the base domain to BASE_DOMAIN
+- ```jeff config --base-domain {BASE_DOMAIN}``` set the base domain to {BASE_DOMAIN}
 - ```jeff config --reset-base-domain``` resets the base domain
 
 *Note: The base domain can remain default -- it's configurable for air-gapped network*
@@ -28,7 +30,7 @@ Wrapper for Dynamic Analysis Docker Images
 - ```jeff afl-ppc``` afl qemu configured for PowerPC target
 - ```jeff debug-ppc``` gdb-ppc script for PowerPc target
 
-All commands have a mandatory ```--name NAME``` flag and an optional ```--directory DIRECTORY``` flag that maps DIRECTORY into the container.
+All commands have a mandatory ```--name {NAME}``` flag and an optional ```--directory {DIRECTORY}``` flag that maps DIRECTORY into the container.
 
 ## Install
 Git clone the repository and use ```pip3 install . --upgrade``` within the source jeff directory.
