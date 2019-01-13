@@ -32,3 +32,6 @@ All commands have a mandatory ```--name NAME``` flag and an optional ```--direct
 
 ## Install
 Git clone the repository and use ```pip3 install . --upgrade``` within the source jeff directory.
+
+## Licensing
+Contributions to jeff operate under the [MIT](https://github.com/JeffJerseyCow/jeff/blob/master/LICENSE) license.
