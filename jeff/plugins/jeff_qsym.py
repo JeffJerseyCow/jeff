@@ -11,12 +11,6 @@ def parser(subparsers):
 def run(args, config):
     qsym = JeffContainer(image(), args, config, privileged=True)
 
-    if qsym.checkContainer():
-        return True
-
-    if not qsym.checkImage():
-        return False
-
     if args.directory and not qsym.addVolume(args.directory, '/qsym'):
         return False
 

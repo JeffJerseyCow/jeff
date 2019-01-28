@@ -11,12 +11,6 @@ def parser(subparsers):
 def run(args, config):
     debug = JeffContainer(image(), args, config, privileged=True)
 
-    if debug.checkContainer():
-        return True
-
-    if not debug.checkImage():
-        return False
-
     if args.directory and not debug.addVolume(args.directory, '/debug'):
         return False
 

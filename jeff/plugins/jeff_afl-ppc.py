@@ -11,12 +11,6 @@ def parser(subparsers):
 def run(args, config):
     aflPpc = JeffContainer(image(), args, config, privileged=True)
 
-    if aflPpc.checkContainer():
-        return True
-
-    if not aflPpc.checkImage():
-        return False
-
     if args.directory and not aflPpc.addVolume(args.directory, '/afl'):
         return False
 

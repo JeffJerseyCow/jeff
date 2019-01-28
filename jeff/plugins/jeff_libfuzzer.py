@@ -11,12 +11,6 @@ def parser(subparsers):
 def run(args, config):
     libfuzzer = JeffContainer(image(), args, config)
 
-    if libfuzzer.checkContainer():
-        return True
-
-    if not libfuzzer.checkImage():
-        return False
-
     if args.directory and not libfuzzer.addVolume(args.directory, '/libfuzzer'):
         return False
 

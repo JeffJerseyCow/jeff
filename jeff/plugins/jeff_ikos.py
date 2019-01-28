@@ -11,12 +11,6 @@ def parser(subparsers):
 def run(args, config):
     ikos = JeffContainer(image(), args, config)
 
-    if ikos.checkContainer():
-        return True
-
-    if not ikos.checkImage():
-        return False
-
     if args.directory and not ikos.addVolume(args.directory, '/ikos'):
         return False
 

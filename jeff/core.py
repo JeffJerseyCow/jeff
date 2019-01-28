@@ -29,59 +29,7 @@ class JeffContainer:
         self._volumes = []
         self._flags = []
 
-    def checkImage(self):
-        """Check host machine for docker image and pull if not found.
-
-        Returns:
-            True if the docker image was found or downloaded successfully else
-            False.
-        """
-        cmdArgs = ['docker', 'image', 'ls']
-        output = subprocess.run(cmdArgs, check=True, stdout=subprocess.PIPE).stdout.decode()
-        r = re.compile(r'%s\s+%s' % (self._imageName, self._imageVersion))
-
-        if not r.search(output):
-            cmdArgs = ['docker', 'pull', '%s:%s' % (self._imageName, self._imageVersion)]
-
-            try:
-                subprocess.run(cmdArgs, stderr=subprocess.DEVNULL, check=True)
-            except subprocess.CalledProcessError:
-                print('Error: Cannot download image %s:%s' % (self._imageName, self._imageVersion))
-                return False
-
-        return True
-
-    def checkContainer(self):
-        """Check host machine for existing container with the specified
-        self._name and load if found.
-
-        Returns:
-            True if found and loaded else False.
-        """
-        cmdArgs = ['docker', 'ps', '-a']
-        output = subprocess.run(cmdArgs, check=True, stdout=subprocess.PIPE).stdout
-        output = output.decode().splitlines()
-
-        for line in output:
-            containerName = re.search(r'([\-a-zA-Z0-9_]+)\s*$', line)
-
-            if self._args.name == containerName.group(0) and self._args.name in self._config['containers']:
-                cmdArgs = ['docker', 'start', '%s' % self._args.name]
-                subprocess.run(cmdArgs, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL, check=True)
-
-                cmdArgs = ['docker', 'attach', '%s' % self._args.name]
-                print('Loaded existing container %s' % self._args.name)
-
-                if self._args.directory:
-                    print('Cannot configure directory for existing container')
-
-                subprocess.run(cmdArgs)
-                return True
-
-        return False
-
-    def _addEnv(self, name, value):
+    def addEnv(self, name, value):
         """Create docker environment string of the form {name}={value}.
 
         Args:
@@ -93,28 +41,6 @@ class JeffContainer:
         """
         return ['-e', '%s=%s' % (name, value)]
 
-    def addVolume(self, hostDir, guestDir):
-        """Create docker volume string of the form {hostDir}/:{guestDir}/.
-
-        Args:
-            hostDir: Host directory to mount.
-            guestDir: Mount point in the docker container.
-
-        Returns:
-            docker volume string list else False if the host directory doesn't
-            exists.
-        """
-        if not hostDir:
-            return False
-
-        if not os.path.isdir(hostDir):
-            print('Error: Directory %s doesn\'t exist' % hostDir)
-            return False
-
-        directory = os.path.realpath(hostDir)
-        self._volumes = self._volumes + ['-v', '%s:%s' % (directory, guestDir)]
-        return True
-
     def addFlags(self, flags):
         """Create custom flags to the docker string.
 
@@ -125,6 +51,28 @@ class JeffContainer:
             docker flag string list.
         """
         self._flags = self._flags + flags
+        return True
+
+    def addVolume(self, hostDir, guestDir):
+        """Create docker volume string of the form {hostDir}/:{guestDir}/.
+
+        Args:
+        hostDir: Host directory to mount.
+        guestDir: Mount point in the docker container.
+
+        Returns:
+        docker volume string list else False if the host directory doesn't
+        exists.
+        """
+        if not hostDir:
+            return False
+
+        if not os.path.isdir(hostDir):
+            print('Error: Directory %s doesn\'t exist' % hostDir)
+            return False
+
+        directory = os.path.realpath(hostDir)
+        self._volumes = self._volumes + ['-v', '%s:%s' % (directory, guestDir)]
         return True
 
     def _addImage(self):
@@ -139,36 +87,91 @@ class JeffContainer:
         else:
             return ['%s:%s' % (self._imageName, self._imageVersion)]
 
+    def _addJeffEntry(self):
+        self._config['containers'].append(self._args.name)
+        updateConfig(self._config)
+
+    def _checkDockerContainer(self):
+        cmdArgs = ['docker', 'ps', '-a']
+        output = subprocess.run(cmdArgs, check=True, stdout=subprocess.PIPE).stdout
+        output = output.decode().splitlines()
+
+        for line in output:
+            containerName = re.search(r'([\-a-zA-Z0-9_]+)\s*$', line)
+
+            if self._args.name == containerName.group(0):
+                return True
+
+        return False
+
+    def _checkJeffContainer(self):
+        for containerName in self._config['containers']:
+            if self._args.name == containerName:
+                return True
+
+        return False
+
+    def _loadJeffContainer(self):
+        cmdArgs = ['docker', 'start', '%s' % self._args.name]
+        subprocess.run(cmdArgs, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL, check=True)
+
+        cmdArgs = ['docker', 'attach', '%s' % self._args.name]
+        print('Loaded existing container %s' % self._args.name)
+
+        if self._args.directory:
+            print('Cannot configure directory for existing container')
+
+        subprocess.run(cmdArgs)
+        return True
+
+    def _deleteJeffEntry(self):
+        self._config['containers'].remove(self._args.name)
+        updateConfig(self._config)
+
     def start(self):
         """Create and run docker container.
 
         Returns:
-            True if container is created and loaded else False.
+        True if container is created and loaded else False.
         """
+
+        # Check for invalid state (JC -> DC)
+        if self._checkJeffContainer() and not self._checkDockerContainer():
+            print("Warning: jeff is in an invalid state, deleting incorrect entry")
+            self._deleteJeffEntry()
+
+        # Check for valid state (JC && DC)
+        elif self._checkJeffContainer() and self._checkDockerContainer():
+            return self._loadJeffContainer()
+
+        # Check for valid state (¬JC && DC)
+        elif not self._checkJeffContainer() and self._checkDockerContainer():
+            print("Error: Container name already in use")
+            return False
+
+        # Default for valid state (¬JC && ¬DC)
         cmdArgs = ['docker', 'run', '-ti', '--name', self._args.name,
                    '-h', self._args.name]
 
         if self._privileged:
             cmdArgs = cmdArgs + ['--privileged']
 
-        cmdArgs = cmdArgs + self._addEnv('INITIALGID', os.getgid())
-        cmdArgs = cmdArgs + self._addEnv('INITIALUID', os.getuid())
+        cmdArgs = cmdArgs + self.addEnv('INITIALGID', os.getgid())
+        cmdArgs = cmdArgs + self.addEnv('INITIALUID', os.getuid())
         cmdArgs = cmdArgs + self._volumes
         cmdArgs = cmdArgs + self._flags
         cmdArgs = cmdArgs + self._addImage()
 
+        self._addJeffEntry()
+
+        if 'directory' in self._args and not self._args.directory:
+            print('Directory not specified')
+
         try:
-            self._config['containers'].append(self._args.name)
-            updateConfig(self._config)
-
-            if 'directory' in self._args and not self._args.directory:
-                print('Directory not specified')
-
             subprocess.run(cmdArgs, check=True)
             return True
-
         except subprocess.CalledProcessError:
-            self._config['containers'].remove(self._args.name)
-            updateConfig(self._config)
-            print('Error: Cannot create container %s' % self._args.name)
-            return False
+            print("Error: Cannot create container, check Docker image string")
+
+        return False
