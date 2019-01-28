@@ -182,6 +182,6 @@ class JeffContainer:
             subprocess.run(cmdArgs, check=True)
             return True
         except subprocess.CalledProcessError:
-            print("Error: Cannot create container, check Docker image string")
+            print("Error: Cannot create container, check image and name")
 
         return False
