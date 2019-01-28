@@ -183,6 +183,5 @@ class JeffContainer:
             return True
         except subprocess.CalledProcessError:
             print("Error: Cannot create container, check image and name")
-            self._deleteJeffEntry()
 
         return False
