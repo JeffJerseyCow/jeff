@@ -1,7 +1,7 @@
 import os
 import re
 import subprocess
-from jeff.utils import updateConfig
+from jeff.utils import updateConfig, checkDockerContainer, checkJeffContainer
 
 class JeffContainer:
 
@@ -92,24 +92,10 @@ class JeffContainer:
         updateConfig(self._config)
 
     def _checkDockerContainer(self):
-        cmdArgs = ['docker', 'ps', '-a']
-        output = subprocess.run(cmdArgs, check=True, stdout=subprocess.PIPE).stdout
-        output = output.decode().splitlines()
-
-        for line in output:
-            containerName = re.search(r'([\-a-zA-Z0-9_]+)\s*$', line)
-
-            if self._args.name == containerName.group(0):
-                return True
-
-        return False
+        return checkDockerContainer(self._args.name)
 
     def _checkJeffContainer(self):
-        for containerName in self._config['containers']:
-            if self._args.name == containerName:
-                return True
-
-        return False
+        return checkJeffContainer(self._args.name, self._config)
 
     def _deleteJeffEntry(self):
         self._config['containers'].remove(self._args.name)

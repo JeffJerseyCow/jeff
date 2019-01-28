@@ -25,6 +25,26 @@ def checkDocker():
         print('Error: Add user %s to docker group' % os.getenv("USER"))
         return False
 
+def checkDockerContainer(name):
+    cmdArgs = ['docker', 'ps', '-a']
+    output = subprocess.run(cmdArgs, check=True, stdout=subprocess.PIPE).stdout
+    output = output.decode().splitlines()
+
+    for line in output:
+        containerName = re.search(r'([\-a-zA-Z0-9_]+)\s*$', line)
+
+        if name == containerName.group(0):
+            return True
+
+    return False
+
+def checkJeffContainer(name, config):
+    for containerName in config['containers']:
+        if name == containerName:
+            return True
+
+    return False
+
 def loadConfig():
     """Loads the jeff confgiruation file.
 
@@ -103,23 +123,20 @@ def removeContainer(name, config):
     Returns:
         True if container was removed else False.
     """
-    cmdArgs = ['docker', 'ps', '-a']
-    output = subprocess.run(cmdArgs, check=True, stdout=subprocess.PIPE).stdout
-    output = output.decode().splitlines()
+    if checkJeffContainer(name, config) and not checkDockerContainer(name):
+        config['containers'].remove(name)
+        updateConfig(config)
+        print('Deleted invalid jeff entry')
+        return True
 
-    for line in output:
-        containerName = re.search(r'([\-a-zA-Z0-9_]+)\s*$', line)
-        if name == containerName.group(0) and name in config['containers']:
-            cmdArgs = ['docker', 'container', 'rm', '--force', '%s' % name]
-            subprocess.run(cmdArgs, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL, check=True)
-
-            # delete from config
-            config['containers'].remove(name)
-            updateConfig(config)
-
-            print('Deleted %s' % name)
-            return True
+    elif checkJeffContainer(name, config) and checkDockerContainer(name):
+        cmdArgs = ['docker', 'container', 'rm', '--force', '%s' % name]
+        subprocess.run(cmdArgs, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL, check=True)
+        config['containers'].remove(name)
+        updateConfig(config)
+        print('Deleted %s' % name)
+        return True
 
     print('Error: Container %s does not exist' % name)
     return False
