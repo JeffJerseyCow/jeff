@@ -32,8 +32,8 @@ def main():
     else:
         parser.print_help()
 
-if __name__ == '__main__':
+def entryPoint():
     try:
         sys.exit(main())
     except KeyboardInterrupt:
-        print('Exiting')
+        print('')

@@ -111,6 +111,10 @@ class JeffContainer:
 
         return False
 
+    def _deleteJeffEntry(self):
+        self._config['containers'].remove(self._args.name)
+        updateConfig(self._config)
+
     def _loadJeffContainer(self):
         cmdArgs = ['docker', 'start', '%s' % self._args.name]
         subprocess.run(cmdArgs, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
@@ -125,9 +129,13 @@ class JeffContainer:
         subprocess.run(cmdArgs)
         return True
 
-    def _deleteJeffEntry(self):
-        self._config['containers'].remove(self._args.name)
-        updateConfig(self._config)
+    def _pullLatest(self):
+        if not self._args.no_update:
+            cmdArgs = ['docker', 'pull'] + self._addImage()
+            try:
+                subprocess.run(cmdArgs, check=True)
+            except subprocess.CalledProcessError:
+                print("Warning: Cannot pull latest image")
 
     def start(self):
         """Create and run docker container.
@@ -151,6 +159,8 @@ class JeffContainer:
             return False
 
         # Default for valid state (¬JC && ¬DC)
+        self._pullLatest()
+
         cmdArgs = ['docker', 'run', '-ti', '--name', self._args.name,
                    '-h', self._args.name]
 
